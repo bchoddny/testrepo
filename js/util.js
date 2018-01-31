@@ -14,7 +14,7 @@ function callWhenReadyToGo(callback) {
             return;
         }
 
-
+        //assumes loadingdiv is the container id, that has the loading gif
         var loadingDiv = document.getElementById('loadingdiv');
         if (loadingDiv) {
             console.log('loading is completed');

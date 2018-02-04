@@ -1,32 +1,46 @@
-var timeInterval = 5000,
-    myTimer;
+var timeInterval = 2000,
+    myTimer,
+    ajaxRequests = 0;
+
+//override XMLHttpRequest send method to capture the ajax requests
+XMLHttpRequest.prototype.oldSend = XMLHttpRequest.prototype.send;
+var overriddenSend = function(vData) {
+    ajaxRequests++;
+
+    var callback = this.onreadystatechange;
+    //intercept the state change
+    this.onreadystatechange = function() {
+        if (this.readyState == 4) {
+            ajaxRequests--;
+        }
+
+        if (callback) {
+            callback.apply(this, arguments)
+        }
+    };
+    this.oldSend(vData);
+};
+XMLHttpRequest.prototype.send = overriddenSend;
 
 function callWhenReadyToGo(callback) {
-
     var maxCheck = 5,
         checkCounter = 0;
 
     var checkIfLoadingIsDone = function () {
-        if (checkCounter === maxCheck) {
+
+        checkCounter++;
+        if (checkCounter === maxCheck) { //check for maximum attempts
             //something wrong with the loading, so just quit
-            console.warn('Exceeded maximum wait time');
+            console.warn('Exceeded maximum wait time to check pending ajax requests');
             clearInterval(myTimer);
             return;
         }
 
-        //assumes loadingdiv is the container id, that has the loading gif
-        var loadingDiv = document.getElementById('loadingdiv');
-        if (loadingDiv) {
-            console.log('loading is completed');
+        if (ajaxRequests === 0) { //ajax requests are done
             clearInterval(myTimer);
             callback();
         }
-        else {
-            checkCounter++;
-        }
-
     };
 
     myTimer = setInterval(checkIfLoadingIsDone, timeInterval);
-
 }
